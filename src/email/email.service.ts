@@ -1,28 +1,31 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Transporter, createTransport } from 'nodemailer';
-
-const adminEmail = '913321406@qq.com'; // 发邮件的邮箱地址
-const pass = 'nzdyfpcnpunsbdhh'; // 邮箱授权码
 
 @Injectable()
 export class EmailService {
   private transport: Transporter;
 
-  constructor() {
+  constructor(private configService: ConfigService) {
+    const getEnvBuKey = (key: string) => this.configService.get(key);
+
     this.transport = createTransport({
-      host: 'smtp.qq.com',
-      port: 587,
+      host: getEnvBuKey('nodemailer_host'),
+      port: getEnvBuKey('nodemailer_port'),
       secure: false,
       auth: {
-        user: adminEmail,
-        pass: pass,
+        user: getEnvBuKey('nodemailer_auth_user'),
+        pass: getEnvBuKey('nodemailer_auth_pass'),
       },
     });
   }
 
   async sendMail({ to, subject, html }) {
     await this.transport.sendMail({
-      from: { name: '会议室预定系统', address: adminEmail },
+      from: {
+        name: '会议室预定系统',
+        address: this.configService.get('nodemailer_auth_user'),
+      },
       to,
       subject,
       html,
