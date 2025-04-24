@@ -70,7 +70,7 @@ export class UserService {
     permission2.description = '访问 ddd 接口';
 
     user1.roles = [role1];
-    user2.roles = [role2];
+    user2.roles = [role1, role2];
 
     role1.permissions = [permission1, permission2];
     role2.permissions = [permission1];
@@ -136,33 +136,38 @@ export class UserService {
     vo.userInfo = {
       ...rest,
       createTime: 0,
-      roles: roles.map((item) => item.name),
-      // permissions 是所有 roles 的 permissions 的合并，要去下重
-      permissions: roles.reduce((arr, item) => {
-        item.permissions.forEach((permission) => {
-          if (arr.indexOf(permission) === -1) {
-            arr.push(permission);
-          }
-        });
-        return arr;
-      }, []),
+      ...this.handleVoRoleAndPermission(roles),
     };
+
+    const { accessToken, refreshToken } = this.createUserToken(foundUser);
+    vo.accessToken = accessToken;
+    vo.refreshToken = refreshToken;
 
     return vo;
   }
 
-  createUserToken(
-    userInfo: Pick<
-      LoginUserVo['userInfo'],
-      'id' | 'username' | 'roles' | 'permissions'
-    >,
-  ) {
+  // 处理 vo 输出的 roles 和 permissions 字段
+  handleVoRoleAndPermission(roles: Role[]) {
+    return {
+      roles: roles.map((item) => item.name),
+      // permissions 是所有 roles 的 permissions 的合并，要去下重
+      permissions: [
+        // Map 的键值是唯一的，所以用 code 值来做键值，去重
+        ...new Map(
+          roles
+            .flatMap((item) => item.permissions)
+            .map((permission) => [permission.code, permission]),
+        ).values(),
+      ],
+    };
+  }
+
+  createUserToken(userInfo: User) {
     const accessToken = this.jwtService.sign(
       {
         userId: userInfo.id,
         username: userInfo.username,
-        roles: userInfo.roles,
-        permissions: userInfo.permissions,
+        ...this.handleVoRoleAndPermission(userInfo.roles),
       },
       {
         expiresIn:
@@ -194,19 +199,6 @@ export class UserService {
 
     if (!user) return null;
 
-    return {
-      id: user.id,
-      username: user.username,
-      isAdmin: user.isAdmin,
-      roles: user.roles.map((item) => item.name),
-      permissions: user.roles.reduce((arr, item) => {
-        item.permissions.forEach((permission) => {
-          if (arr.indexOf(permission) === -1) {
-            arr.push(permission);
-          }
-        });
-        return arr;
-      }, []),
-    };
+    return user;
   }
 }

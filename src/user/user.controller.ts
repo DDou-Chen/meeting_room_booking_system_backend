@@ -72,33 +72,12 @@ export class UserController {
   @Post('login')
   async login(@Body() loginUser: LoginUserDto) {
     const vo = await this.userService.login(loginUser, false);
-
-    const { accessToken, refreshToken } = this.userService.createUserToken({
-      id: vo.userInfo.id,
-      username: vo.userInfo.username,
-      roles: vo.userInfo.roles,
-      permissions: vo.userInfo.permissions,
-    });
-
-    vo.accessToken = accessToken;
-    vo.refreshToken = refreshToken;
-
     return vo;
   }
 
   @Post('admin-login')
   async adminLogin(@Body() loginUser: LoginUserDto) {
     const vo = await this.userService.login(loginUser, true);
-
-    const { accessToken, refreshToken } = this.userService.createUserToken({
-      id: vo.userInfo.id,
-      username: vo.userInfo.username,
-      roles: vo.userInfo.roles,
-      permissions: vo.userInfo.permissions,
-    });
-
-    vo.accessToken = accessToken;
-    vo.refreshToken = refreshToken;
 
     return vo;
   }
@@ -113,12 +92,7 @@ export class UserController {
       const userInfo = await this.userService.findUserById(data.userId, false);
 
       const { accessToken, refreshToken: newRefreshToken } =
-        this.userService.createUserToken({
-          id: userInfo.id,
-          username: userInfo.username,
-          roles: userInfo.roles,
-          permissions: userInfo.permissions,
-        });
+        this.userService.createUserToken(userInfo);
 
       return {
         accessToken,
@@ -138,12 +112,7 @@ export class UserController {
       const userInfo = await this.userService.findUserById(data.userId, true);
 
       const { accessToken, refreshToken: newRefreshToken } =
-        this.userService.createUserToken({
-          id: userInfo.id,
-          username: userInfo.username,
-          roles: userInfo.roles,
-          permissions: userInfo.permissions,
-        });
+        this.userService.createUserToken(userInfo);
 
       return {
         accessToken,
