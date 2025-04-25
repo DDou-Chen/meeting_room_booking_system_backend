@@ -24,6 +24,9 @@ declare module 'express' {
   }
 }
 
+/**
+ * 登录态守卫
+ */
 @Injectable()
 export class LoginGuard implements CanActivate {
   @Inject(JwtService)

@@ -9,6 +9,9 @@ import { Reflector } from '@nestjs/core';
 import { Request } from 'express';
 import { Observable } from 'rxjs';
 
+/**
+ * 权限守卫
+ */
 @Injectable()
 export class PermissionGuard implements CanActivate {
   @Inject(Reflector)

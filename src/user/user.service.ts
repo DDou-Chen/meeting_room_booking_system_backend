@@ -17,6 +17,9 @@ import { LoginUserDto } from './dto/login-user.dto';
 import { LoginUserVo } from './vo/login-user.vo';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { UserDetailVo } from './vo/info-user.vo';
+import { UpdateUserPasswordDto } from './dto/update-user-password.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UserService {
@@ -83,12 +86,12 @@ export class UserService {
   async register(user: RegisterUserDto) {
     const { email, captcha, username } = user;
 
-    const u_captcha = await this.redisService.get(`captcha_${email}`);
+    const r_captcha = await this.redisService.get(`captcha_${email}`);
     if (!captcha) {
       throw new HttpException('验证码已失效', HttpStatus.BAD_REQUEST);
     }
 
-    if (captcha !== u_captcha) {
+    if (captcha !== r_captcha) {
       throw new HttpException('验证码不正确', HttpStatus.BAD_REQUEST);
     }
 
@@ -200,5 +203,80 @@ export class UserService {
     if (!user) return null;
 
     return user;
+  }
+
+  async getInfo(userId: number) {
+    const user = await this.userRepository.findOneBy({ id: userId });
+
+    const vo = new UserDetailVo();
+
+    vo.id = user.id;
+    vo.username = user.username;
+    vo.nickName = user.nickName;
+    vo.email = user.email;
+    vo.headPic = user.headPic;
+    vo.phoneNumber = user.phoneNumber;
+    vo.isFrozen = user.isFrozen;
+    vo.createTime = user.createTime;
+
+    return vo;
+  }
+
+  async updatePassword(userId: number, passwordDto: UpdateUserPasswordDto) {
+    const { email, captcha, password } = passwordDto;
+    const r_captcha = await this.redisService.get(
+      `update_password_captcha_${email}`,
+    );
+    if (!captcha) {
+      throw new HttpException('验证码已失效', HttpStatus.BAD_REQUEST);
+    }
+
+    if (captcha !== r_captcha) {
+      throw new HttpException('验证码不正确', HttpStatus.BAD_REQUEST);
+    }
+
+    const user = await this.userRepository.findOneBy({ id: userId });
+
+    user.password = md5(password);
+
+    try {
+      await this.userRepository.save(user);
+      return '密码修改成功';
+    } catch (error) {
+      this.logger.error(error, UserService);
+      return '密码修改失败';
+    }
+  }
+
+  async update(userId: number, updateUserDto: UpdateUserDto) {
+    const captcha = await this.redisService.get(
+      `update_user_captcha_${updateUserDto.email}`,
+    );
+
+    if (!captcha) {
+      throw new HttpException('验证码已失效', HttpStatus.BAD_REQUEST);
+    }
+
+    if (updateUserDto.captcha !== captcha) {
+      throw new HttpException('验证码不正确', HttpStatus.BAD_REQUEST);
+    }
+
+    const user = await this.userRepository.findOneBy({ id: userId });
+
+    if (updateUserDto.headPic) {
+      user.headPic = updateUserDto.headPic;
+    }
+
+    if (updateUserDto.nickName) {
+      user.nickName = updateUserDto.nickName;
+    }
+
+    try {
+      await this.userRepository.save(user);
+      return '修改成功';
+    } catch (error) {
+      this.logger.error(error, UserService);
+      return '修改失败';
+    }
   }
 }

@@ -18,7 +18,10 @@ import {
   RequireLogin,
   RequirePermission,
   SkipLogin,
+  UserInfo,
 } from 'src/custom.decorator';
+import { UpdateUserPasswordDto } from './dto/update-user-password.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 // dto 是接收参数的，vo 是封装返回的数据的，entity 是和数据库表对应的。
 
@@ -53,7 +56,7 @@ export class UserController {
     return this.userService.register(user);
   }
 
-  // 发送验证码
+  // 发送注册验证码
   @Get('register-captcha')
   async captcha(@Query('address') address: string) {
     const code = Math.random().toString().slice(2, 8);
@@ -75,7 +78,7 @@ export class UserController {
     return vo;
   }
 
-  @Post('admin-login')
+  @Post('admin/login')
   async adminLogin(@Body() loginUser: LoginUserDto) {
     const vo = await this.userService.login(loginUser, true);
 
@@ -103,7 +106,7 @@ export class UserController {
     }
   }
 
-  @Get('admin-refresh')
+  @Get('admin/refresh')
   @RequireLogin()
   async adminRefresh(@Query('refreshToken') refreshToken: string) {
     try {
@@ -121,5 +124,67 @@ export class UserController {
     } catch (error) {
       throw new UnauthorizedException('token 已失效，请重新登录');
     }
+  }
+
+  // 获取用户详情
+  @Get('getInfo')
+  async getInfo(@UserInfo('userId') userId: number) {
+    return await this.userService.getInfo(userId);
+  }
+
+  // 修改密码
+  @Post(['update_password', 'admin/update_password'])
+  async updatePassword(
+    @UserInfo('userId') userId: number,
+    @Body() passwordDto: UpdateUserPasswordDto,
+  ) {
+    return this.userService.updatePassword(userId, passwordDto);
+  }
+
+  // 发送修改密码验证码
+  @Get('update_password/captcha')
+  async updatePasswordCaptcha(@Query('address') address: string) {
+    const code = Math.random().toString().slice(2, 8);
+
+    await this.redisService.set(
+      `update_password_captcha_${address}`,
+      code,
+      10 * 60,
+    );
+
+    await this.emailService.sendMail({
+      to: address,
+      subject: '更改密码验证码',
+      html: `<p>你的更改密码验证码是 ${code}</p>`,
+    });
+    return '发送成功';
+  }
+
+  // 修改个人信息
+  @Post(['update', 'admin/update'])
+  async update(
+    @UserInfo('userId') userId: number,
+    @Body() updateUserDto: UpdateUserDto,
+  ) {
+    return this.userService.update(userId, updateUserDto);
+  }
+
+  // 发送修改密码验证码
+  @Get('update/captcha')
+  async updateCaptcha(@Query('address') address: string) {
+    const code = Math.random().toString().slice(2, 8);
+
+    await this.redisService.set(
+      `update_user_captcha_${address}`,
+      code,
+      10 * 60,
+    );
+
+    await this.emailService.sendMail({
+      to: address,
+      subject: '更改用户信息验证码',
+      html: `<p>你的验证码是 ${code}</p>`,
+    });
+    return '发送成功';
   }
 }
