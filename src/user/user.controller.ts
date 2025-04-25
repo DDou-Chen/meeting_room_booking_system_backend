@@ -1,11 +1,15 @@
 import {
+  BadRequestException,
   Body,
+  ClassSerializerInterceptor,
   Controller,
   Get,
   Inject,
+  ParseIntPipe,
   Post,
   Query,
   UnauthorizedException,
+  UseInterceptors,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { RegisterUserDto } from './dto/register-user.dto';
@@ -22,6 +26,7 @@ import {
 } from 'src/custom.decorator';
 import { UpdateUserPasswordDto } from './dto/update-user-password.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { generateParseIntPipe } from 'src/utils';
 
 // dto 是接收参数的，vo 是封装返回的数据的，entity 是和数据库表对应的。
 
@@ -186,5 +191,32 @@ export class UserController {
       html: `<p>你的验证码是 ${code}</p>`,
     });
     return '发送成功';
+  }
+
+  // 冻结用户
+  @Get('freeze')
+  async freeze(@Query('id') userId: number) {
+    await this.userService.freezeUserById(userId);
+    return 'success';
+  }
+
+  // 获取用户列表
+  @Get('list')
+  @UseInterceptors(ClassSerializerInterceptor)
+  async list(
+    @Query('pageSize', generateParseIntPipe('pageSize 为正整数'))
+    pageSize: number,
+    @Query('pageNo', generateParseIntPipe('pageNo 为正整数')) pageNo: number,
+    @Query('username') username: string,
+    @Query('nickName') nickName: string,
+    @Query('email') email: string,
+  ) {
+    return await this.userService.findUsers(
+      pageNo,
+      pageSize,
+      username,
+      nickName,
+      email,
+    );
   }
 }

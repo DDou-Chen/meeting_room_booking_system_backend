@@ -36,7 +36,6 @@ import { PermissionGuard } from './permission.guard';
     TypeOrmModule.forRootAsync({
       useFactory(configService: ConfigService) {
         const getEnvByKey = (key: string) => configService.get(key);
-        console.log('mysql_server_host:::', getEnvByKey('mysql_server_host'));
 
         return {
           type: 'mysql',
