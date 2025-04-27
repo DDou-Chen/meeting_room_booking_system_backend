@@ -9,6 +9,7 @@ import {
   Post,
   Query,
   UnauthorizedException,
+  UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
 import { UserService } from './user.service';
@@ -27,6 +28,9 @@ import {
 import { UpdateUserPasswordDto } from './dto/update-user-password.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { generateParseIntPipe } from 'src/utils';
+import { FileInterceptor } from '@nestjs/platform-express';
+import path from 'path';
+import { storage } from 'src/my-file-storage';
 
 // dto 是接收参数的，vo 是封装返回的数据的，entity 是和数据库表对应的。
 
@@ -139,15 +143,14 @@ export class UserController {
 
   // 修改密码
   @Post(['update_password', 'admin/update_password'])
-  async updatePassword(
-    @UserInfo('userId') userId: number,
-    @Body() passwordDto: UpdateUserPasswordDto,
-  ) {
-    return this.userService.updatePassword(userId, passwordDto);
+  @SkipLogin()
+  async updatePassword(@Body() passwordDto: UpdateUserPasswordDto) {
+    return this.userService.updatePassword(passwordDto);
   }
 
   // 发送修改密码验证码
   @Get('update_password/captcha')
+  @SkipLogin()
   async updatePasswordCaptcha(@Query('address') address: string) {
     const code = Math.random().toString().slice(2, 8);
 
@@ -174,9 +177,9 @@ export class UserController {
     return this.userService.update(userId, updateUserDto);
   }
 
-  // 发送修改密码验证码
+  // 发送修改用户信息验证码
   @Get('update/captcha')
-  async updateCaptcha(@Query('address') address: string) {
+  async updateCaptcha(@UserInfo('email') address: string) {
     const code = Math.random().toString().slice(2, 8);
 
     await this.redisService.set(
@@ -218,5 +221,30 @@ export class UserController {
       nickName,
       email,
     );
+  }
+
+  // 上传图片
+  @Post('upload')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      dest: 'uploads',
+      storage: storage,
+      limits: {
+        fileSize: 1024 * 1024 * 3,
+      },
+      fileFilter(req, file, callback) {
+        const extname = path.extname(file.originalname);
+        if (['.png', '.jpg', '.gif'].includes(extname)) {
+          // callback 的第一个参数是 error，第二个参数是是否接收文件
+          callback(null, true);
+        } else {
+          callback(new BadRequestException('图片格式不符合要求'), false);
+        }
+      },
+    }),
+  )
+  uploadFile(@UploadedFile() file: Express.Multer.File) {
+    console.log(file);
+    return file.path;
   }
 }

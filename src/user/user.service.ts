@@ -171,6 +171,7 @@ export class UserService {
         userId: userInfo.id,
         username: userInfo.username,
         ...this.handleVoRoleAndPermission(userInfo.roles),
+        email: userInfo.email,
       },
       {
         expiresIn:
@@ -222,7 +223,7 @@ export class UserService {
     return vo;
   }
 
-  async updatePassword(userId: number, passwordDto: UpdateUserPasswordDto) {
+  async updatePassword(passwordDto: UpdateUserPasswordDto) {
     const { email, captcha, password } = passwordDto;
     const r_captcha = await this.redisService.get(
       `update_password_captcha_${email}`,
@@ -235,7 +236,13 @@ export class UserService {
       throw new HttpException('验证码不正确', HttpStatus.BAD_REQUEST);
     }
 
-    const user = await this.userRepository.findOneBy({ id: userId });
+    const user = await this.userRepository.findOneBy({
+      username: passwordDto.username,
+    });
+
+    if (user.email !== passwordDto.email) {
+      throw new HttpException('邮箱不正确', HttpStatus.BAD_REQUEST);
+    }
 
     user.password = md5(password);
 
