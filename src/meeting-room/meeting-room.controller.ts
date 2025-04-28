@@ -1,5 +1,18 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  DefaultValuePipe,
+  Delete,
+  Get,
+  Inject,
+  Param,
+  ParseIntPipe,
+  Post,
+  Put,
+  Query,
+} from '@nestjs/common';
 import { MeetingRoomService } from './meeting-room.service';
+import { generateParseIntPipe } from 'src/utils';
 import { CreateMeetingRoomDto } from './dto/create-meeting-room.dto';
 import { UpdateMeetingRoomDto } from './dto/update-meeting-room.dto';
 
@@ -7,28 +20,48 @@ import { UpdateMeetingRoomDto } from './dto/update-meeting-room.dto';
 export class MeetingRoomController {
   constructor(private readonly meetingRoomService: MeetingRoomService) {}
 
-  @Post()
-  create(@Body() createMeetingRoomDto: CreateMeetingRoomDto) {
-    return this.meetingRoomService.create(createMeetingRoomDto);
+  // 会议室列表
+  @Get('list')
+  async getList(
+    @Query('pageNo', new DefaultValuePipe(1), generateParseIntPipe('pageNo'))
+    pageNo: number,
+    @Query(
+      'pageSize',
+      new DefaultValuePipe(10),
+      generateParseIntPipe('pageSize'),
+    )
+    pageSize: number,
+    @Query('name') name: string,
+    @Query('capacity') capacity: number,
+    @Query('equipment') equipment: string,
+  ) {
+    return await this.meetingRoomService.getList(
+      pageNo,
+      pageSize,
+      name,
+      capacity,
+      equipment,
+    );
   }
 
-  @Get()
-  findAll() {
-    return this.meetingRoomService.findAll();
+  // 创建会议室
+  @Post('create')
+  async create(@Body() createMeetRoomDto: CreateMeetingRoomDto) {
+    return await this.meetingRoomService.createRoom(createMeetRoomDto);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.meetingRoomService.findOne(+id);
+  @Put('update')
+  async update(@Body() updateMeetRoomDto: UpdateMeetingRoomDto) {
+    return await this.meetingRoomService.updateRoom(updateMeetRoomDto);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateMeetingRoomDto: UpdateMeetingRoomDto) {
-    return this.meetingRoomService.update(+id, updateMeetingRoomDto);
+  @Get('find/:id')
+  async find(@Param('id') id: number) {
+    return await this.meetingRoomService.find(id);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.meetingRoomService.remove(+id);
+  @Delete('delete/:id')
+  async delete(@Param('id') id: number) {
+    return await this.meetingRoomService.delete(id);
   }
 }
