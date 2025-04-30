@@ -19,12 +19,7 @@ import { RedisService } from 'src/redis/redis.service';
 import { LoginUserDto } from './dto/login-user.dto';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import {
-  RequireLogin,
-  RequirePermission,
-  SkipLogin,
-  UserInfo,
-} from 'src/custom.decorator';
+import { RequireLogin, RequirePermission, SkipLogin, UserInfo } from 'src/custom.decorator';
 import { UpdateUserPasswordDto } from './dto/update-user-password.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { generateParseIntPipe } from 'src/utils';
@@ -103,8 +98,7 @@ export class UserController {
 
       const userInfo = await this.userService.findUserById(data.userId, false);
 
-      const { accessToken, refreshToken: newRefreshToken } =
-        this.userService.createUserToken(userInfo);
+      const { accessToken, refreshToken: newRefreshToken } = this.userService.createUserToken(userInfo);
 
       return {
         accessToken,
@@ -123,8 +117,7 @@ export class UserController {
 
       const userInfo = await this.userService.findUserById(data.userId, true);
 
-      const { accessToken, refreshToken: newRefreshToken } =
-        this.userService.createUserToken(userInfo);
+      const { accessToken, refreshToken: newRefreshToken } = this.userService.createUserToken(userInfo);
 
       return {
         accessToken,
@@ -154,11 +147,7 @@ export class UserController {
   async updatePasswordCaptcha(@Query('address') address: string) {
     const code = Math.random().toString().slice(2, 8);
 
-    await this.redisService.set(
-      `update_password_captcha_${address}`,
-      code,
-      10 * 60,
-    );
+    await this.redisService.set(`update_password_captcha_${address}`, code, 10 * 60);
 
     await this.emailService.sendMail({
       to: address,
@@ -170,10 +159,7 @@ export class UserController {
 
   // 修改个人信息
   @Post(['update', 'admin/update'])
-  async update(
-    @UserInfo('userId') userId: number,
-    @Body() updateUserDto: UpdateUserDto,
-  ) {
+  async update(@UserInfo('userId') userId: number, @Body() updateUserDto: UpdateUserDto) {
     return this.userService.update(userId, updateUserDto);
   }
 
@@ -182,11 +168,7 @@ export class UserController {
   async updateCaptcha(@UserInfo('email') address: string) {
     const code = Math.random().toString().slice(2, 8);
 
-    await this.redisService.set(
-      `update_user_captcha_${address}`,
-      code,
-      10 * 60,
-    );
+    await this.redisService.set(`update_user_captcha_${address}`, code, 10 * 60);
 
     await this.emailService.sendMail({
       to: address,
@@ -214,13 +196,7 @@ export class UserController {
     @Query('nickName') nickName: string,
     @Query('email') email: string,
   ) {
-    return await this.userService.findUsers(
-      pageNo,
-      pageSize,
-      username,
-      nickName,
-      email,
-    );
+    return await this.userService.findUsers(pageNo, pageSize, username, nickName, email);
   }
 
   // 上传图片

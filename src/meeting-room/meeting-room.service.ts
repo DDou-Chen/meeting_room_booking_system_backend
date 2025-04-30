@@ -1,9 +1,4 @@
-import {
-  BadRequestException,
-  HttpException,
-  HttpStatus,
-  Injectable,
-} from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { MeetingRoom } from './entities/meeting-room.entity';
 import { EntityManager, Like, Repository } from 'typeorm';
 import { InjectEntityManager, InjectRepository } from '@nestjs/typeorm';
@@ -41,13 +36,7 @@ export class MeetingRoomService {
     this.meetRepository.insert([room1, room2, room3]);
   }
 
-  async getList(
-    pageNo: number,
-    pageSize: number,
-    name: string,
-    capacity: number,
-    equipment: string,
-  ) {
+  async getList(pageNo: number, pageSize: number, name: string, capacity: number, equipment: string) {
     if (pageNo < 1) {
       throw new BadRequestException('页码最小为 1');
     }
@@ -123,12 +112,10 @@ export class MeetingRoomService {
       const bookings = await this.entityManager.findBy(Booking, {
         room: { id },
       });
-
       for (let i = 0; i < bookings.length; i++) {
         this.entityManager.delete(Booking, bookings[i].id);
       }
       await this.meetRepository.delete(id);
-
       return 'success';
     } catch (error) {
       throw new BadRequestException(error);

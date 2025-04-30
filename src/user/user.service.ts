@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { User } from './entities/User.entity';
+import { User } from './entities/user.entity';
 import { Like, Repository } from 'typeorm';
 import { RedisService } from 'src/redis/redis.service';
 import { md5 } from 'src/utils';

@@ -23,25 +23,13 @@ export class MeetingRoomController {
   // 会议室列表
   @Get('list')
   async getList(
-    @Query('pageNo', new DefaultValuePipe(1), generateParseIntPipe('pageNo'))
-    pageNo: number,
-    @Query(
-      'pageSize',
-      new DefaultValuePipe(10),
-      generateParseIntPipe('pageSize'),
-    )
-    pageSize: number,
+    @Query('pageNo', new DefaultValuePipe(1), generateParseIntPipe('pageNo')) pageNo: number,
+    @Query('pageSize', new DefaultValuePipe(10), generateParseIntPipe('pageSize')) pageSize: number,
     @Query('name') name: string,
     @Query('capacity') capacity: number,
     @Query('equipment') equipment: string,
   ) {
-    return await this.meetingRoomService.getList(
-      pageNo,
-      pageSize,
-      name,
-      capacity,
-      equipment,
-    );
+    return await this.meetingRoomService.getList(pageNo, pageSize, name, capacity, equipment);
   }
 
   // 创建会议室
