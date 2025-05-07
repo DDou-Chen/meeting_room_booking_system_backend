@@ -1,25 +1,11 @@
+import { PickType } from '@nestjs/swagger';
 import { IsEmail, IsNotEmpty, MinLength } from 'class-validator';
+import { RegisterUserDto } from './register-user.dto';
 
 // 修改个人信息
-export class UpdateUserDto {
+export class UpdateUserDto extends PickType(RegisterUserDto, ['email', 'captcha']) {
   // headPic 和 nickName 就不做非空约束了，也就是说可以不改
   headPic: string;
 
   nickName: string;
-
-  @IsNotEmpty({
-    message: '邮箱不能为空',
-  })
-  @IsEmail(
-    {},
-    {
-      message: '不是合法的邮箱格式',
-    },
-  )
-  email: string;
-
-  @IsNotEmpty({
-    message: '验证码不能为空',
-  })
-  captcha: string;
 }

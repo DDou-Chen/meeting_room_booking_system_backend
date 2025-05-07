@@ -1,10 +1,4 @@
-import {
-  HttpException,
-  HttpStatus,
-  Inject,
-  Injectable,
-  Logger,
-} from '@nestjs/common';
+import { HttpException, HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
@@ -157,9 +151,7 @@ export class UserService {
       permissions: [
         // Map 的键值是唯一的，所以用 code 值来做键值，去重
         ...new Map(
-          roles
-            .flatMap((item) => item.permissions)
-            .map((permission) => [permission.code, permission]),
+          roles.flatMap((item) => item.permissions).map((permission) => [permission.code, permission]),
         ).values(),
       ],
     };
@@ -174,8 +166,7 @@ export class UserService {
         email: userInfo.email,
       },
       {
-        expiresIn:
-          this.configService.get('jwt_access_token_expires_time') || '30m',
+        expiresIn: this.configService.get('jwt_access_token_expires_time') || '30m',
       },
     );
 
@@ -184,8 +175,7 @@ export class UserService {
         userId: userInfo.id,
       },
       {
-        expiresIn:
-          this.configService.get('jwt_refresh_token_expres_time') || '7d',
+        expiresIn: this.configService.get('jwt_refresh_token_expres_time') || '7d',
       },
     );
 
@@ -225,9 +215,7 @@ export class UserService {
 
   async updatePassword(passwordDto: UpdateUserPasswordDto) {
     const { email, captcha, password } = passwordDto;
-    const r_captcha = await this.redisService.get(
-      `update_password_captcha_${email}`,
-    );
+    const r_captcha = await this.redisService.get(`update_password_captcha_${email}`);
     if (!captcha) {
       throw new HttpException('验证码已失效', HttpStatus.BAD_REQUEST);
     }
@@ -248,6 +236,7 @@ export class UserService {
 
     try {
       await this.userRepository.save(user);
+      this.redisService.del(`update_password_captcha_${email}`);
       return '密码修改成功';
     } catch (error) {
       this.logger.error(error, UserService);
@@ -256,9 +245,7 @@ export class UserService {
   }
 
   async update(userId: number, updateUserDto: UpdateUserDto) {
-    const captcha = await this.redisService.get(
-      `update_user_captcha_${updateUserDto.email}`,
-    );
+    const captcha = await this.redisService.get(`update_user_captcha_${updateUserDto.email}`);
 
     if (!captcha) {
       throw new HttpException('验证码已失效', HttpStatus.BAD_REQUEST);
@@ -280,6 +267,7 @@ export class UserService {
 
     try {
       await this.userRepository.save(user);
+      this.redisService.del(`update_user_captcha_${updateUserDto.email}`);
       return '修改成功';
     } catch (error) {
       this.logger.error(error, UserService);
@@ -299,13 +287,7 @@ export class UserService {
     }
   }
 
-  async findUsers(
-    pageNo: number,
-    pageSize: number,
-    username: string,
-    nickName: string,
-    email: string,
-  ) {
+  async findUsers(pageNo: number, pageSize: number, username: string, nickName: string, email: string) {
     const skipCount = (pageNo - 1) * pageSize;
 
     const condition: Record<string, any> = {};

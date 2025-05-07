@@ -1,10 +1,9 @@
+import { PickType } from '@nestjs/swagger';
 import { IsEmail, IsNotEmpty, MinLength } from 'class-validator';
+import { LoginUserDto } from './login-user.dto';
 
 // 用户注册
-export class RegisterUserDto {
-  @IsNotEmpty({ message: '用户名不能为空' })
-  username: string;
-
+export class RegisterUserDto extends PickType(LoginUserDto, ['username']) {
   @IsNotEmpty({ message: '昵称不能为空' })
   nickName: string;
 
